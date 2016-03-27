@@ -165,11 +165,23 @@ test_login_stopped_container() {
 test_shall_stop_before_update() {
 	mock_function stop_container
 	mock_function docker_tool
+	mock_function sudo
 
 	docker_management update img inc ver
 	
 	mock_verify stop_container HAS_CALLED_WITH 'inc'
 	mock_verify docker_tool HAS_CALLED_WITH retain 'img' 'ver' 
+}
+
+test_shall_update_tag_file_after_update() {
+	mock_function stop_container
+	mock_function docker_tool
+	mock_function sudo 'set_global_var tag $(cat)'
+
+	docker_management update test/img inc ver
+
+	mock_verify sudo HAS_CALLED_WITH tee /var/lib/dcs/img/tag
+	assertEquals ver "$(get_global_var tag)"
 }
 
 . $SHUNIT2_BIN

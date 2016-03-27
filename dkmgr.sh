@@ -45,7 +45,8 @@ login_container() {
 
 update_image() {
 	stop_container $2
-	docker_tool retain $1 $3
+	docker_tool retain $1 $3 && \
+	( echo $3 | sudo tee "/var/lib/dcs/$(basename $1)/tag" )
 }
 
 docker_management() {
