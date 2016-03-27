@@ -106,6 +106,14 @@ test_is_container_created_when_not_created() {
 	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -qa
 }
 
+test_instance_run() {
+	mock_function sudo
+
+	instance_run inc
+
+	mock_verify sudo HAS_CALLED_WITH docker start 'inc'
+}
+
 test_stop_runner() {
 	mock_function stop_container
 

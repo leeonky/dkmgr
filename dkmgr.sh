@@ -18,6 +18,10 @@ is_container_created() {
 	[ "$(sudo docker ps --filter "name=$1" -qa)" != "" ]
 }
 
+instance_run() {
+	sudo docker start $1
+}
+
 start_container() {
 	local inc_name=$2
 	local image_name=$1
