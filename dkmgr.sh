@@ -35,7 +35,21 @@ stop_container() {
 	sudo docker stop $1
 }
 
+login_container() {
+	if ! is_container_running $2; then
+		start_container $1 $2
+	fi
+	local ip=$(sudo docker inspect $2 | grep '"IPAddress"' | awk -F\" '{print $4}')
+	ssh devuser@$ip
+}
+
+update_image() {
+	stop_container $2
+	docker_tool retain $1 $3
+}
+
 docker_management() {
+	local new_tag=$4
 	local inc_name=$3
 	local image_name=$2
 	case $1 in
@@ -44,6 +58,16 @@ docker_management() {
 	;;
 	stop)
 		stop_container $inc_name
+	;;
+	restart)
+		stop_container $inc_name
+		start_container $image_name $inc_name
+	;;
+	login)
+		login_container $image_name $inc_name
+	;;
+	update)
+		update_image $image_name $inc_name $new_tag
 	;;
 	esac
 }

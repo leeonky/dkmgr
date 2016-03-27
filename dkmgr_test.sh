@@ -73,7 +73,7 @@ test_is_container_running_when_running() {
 	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -q
 }
 
-test_restart_container() {
+test_start_closed_container() {
 	mock_function is_container_running 'return 1'
 	mock_function is_container_created
 	mock_function image_tag_of
@@ -120,6 +120,56 @@ test_stop_container() {
 	stop_container inc
 
 	mock_verify sudo HAS_CALLED_WITH docker stop 'inc'
+}
+
+test_restart_container() {
+	mock_function stop_container
+	mock_function start_container
+
+	docker_management restart img inc
+
+	mock_verify stop_container HAS_CALLED_WITH 'inc'
+	mock_verify start_container HAS_CALLED_WITH 'img' 'inc'
+}
+
+test_login_running_container() {
+	mock_function is_container_running
+	mock_function sudo 'echo "\"IPAddress\": \"1.2.3.4\",
+	        \"SecondaryIPAddresses\": null,"'
+	mock_function ssh
+	mock_function start_container
+
+	docker_management login img inc
+
+	mock_verify is_container_running HAS_CALLED_WITH 'inc'
+	mock_verify sudo HAS_CALLED_WITH docker inspect 'inc'
+	mock_verify ssh HAS_CALLED_WITH devuser@1.2.3.4
+	mock_verify start_container NEVER_CALLED
+}
+
+test_login_stopped_container() {
+	mock_function is_container_running 'return 1'
+	mock_function sudo 'echo "\"IPAddress\": \"1.2.3.4\",
+	        \"SecondaryIPAddresses\": null,"'
+	mock_function ssh
+	mock_function start_container
+
+	docker_management login img inc
+
+	mock_verify is_container_running HAS_CALLED_WITH 'inc'
+	mock_verify start_container HAS_CALLED_WITH 'img' 'inc'
+	mock_verify sudo HAS_CALLED_WITH docker inspect 'inc'
+	mock_verify ssh HAS_CALLED_WITH devuser@1.2.3.4
+}
+
+test_shall_stop_before_update() {
+	mock_function stop_container
+	mock_function docker_tool
+
+	docker_management update img inc ver
+	
+	mock_verify stop_container HAS_CALLED_WITH 'inc'
+	mock_verify docker_tool HAS_CALLED_WITH retain 'img' 'ver' 
 }
 
 . $SHUNIT2_BIN
