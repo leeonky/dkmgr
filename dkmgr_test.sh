@@ -15,25 +15,25 @@ test_start_container_with_dock_run_when_no_contain() {
 
 	start_container 'img' 'inc'
 
-	mock_verify image_tag_of HAS_CALLED_WITH 'img'
+	mock_verify image_tag_of HAS_CALLED_WITH 'img' 'inc'
 	mock_verify docker_run HAS_CALLED_WITH 'img:1' 'inc'	
 }
 
 test_image_tag_of() {
 	mock_function cat 'echo 1.0'
 
-	local tag=$(image_tag_of 'test/img')
+	local tag=$(image_tag_of 'test/img' 'inc')
 
-	mock_verify cat HAS_CALLED_WITH '/var/lib/dcs/img/tag'
+	mock_verify cat HAS_CALLED_WITH '/var/lib/dcs/img/inc/tag'
 	assertEquals '1.0' "$tag"
 }
 
 test_image_tag_of_with_latest_default() {
 	mock_function cat ''
 
-	local tag=$(image_tag_of 'test/img')
+	local tag=$(image_tag_of 'test/img' 'inc')
 
-	mock_verify cat HAS_CALLED_WITH '/var/lib/dcs/img/tag'
+	mock_verify cat HAS_CALLED_WITH '/var/lib/dcs/img/inc/tag'
 	assertEquals 'latest' "$tag"
 }
 

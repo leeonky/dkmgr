@@ -1,5 +1,5 @@
 image_tag_of() {
-	local tag=$(cat "/var/lib/dcs/"$(basename $1)"/tag")
+	local tag=$(cat "/var/lib/dcs/$(basename $1)/$2/tag")
 	if [ "$tag" == "" ]; then
 		tag="latest"
 	fi
@@ -27,7 +27,7 @@ start_container() {
 	local image_name=$1
 	if ! is_container_running $inc_name; then
 		if ! is_container_created $inc_name; then
-			local tag=$(image_tag_of $image_name)
+			local tag=$(image_tag_of $image_name $inc_name)
 			docker_run $image_name:$tag $inc_name
 		else
 			instance_run $inc_name
