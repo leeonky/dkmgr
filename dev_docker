@@ -1,4 +1,4 @@
-. /usr/local/bin/dkmgr.sh
+. /usr/local/bin/dkmgr/dkmgr.sh
 mgr_method=$1
 shift
 docker_management $mgr_method daocloud.io/leeonky/dev-docker $(basename $0) $@
