@@ -53,7 +53,7 @@ update_image() {
 	fi
 	sudo docker pull "$image_name:$new_tag"
 	echo $3 | sudo tee "/var/lib/dcs/$(basename $image_name)/$inc_name/tag"
-	if [ "$last_tag" != "$new_tag" ]; then
+	if [ "$last_tag" != "" ] && [ "$last_tag" != "$new_tag" ]; then
 		sudo docker stop $inc_name
 		sudo docker rm $inc_name
 		sudo docker rmi "$image_name:$last_tag"

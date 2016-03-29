@@ -179,8 +179,10 @@ fi'
 
 	docker_management update 'test/img' 'inc' 'ver'
 
-	mock_verify sudo HAS_CALLED_WITH docker pull 'test/img:ver'
-	mock_verify sudo HAS_CALLED_WITH tee /var/lib/dcs/img/inc/tag
+	mock_verify sudo CALL_LIST_START
+	mock_verify sudo CALLED_WITH_ARGS docker pull 'test/img:ver'
+	mock_verify sudo CALLED_WITH_ARGS tee /var/lib/dcs/img/inc/tag
+	mock_verify sudo CALL_LIST_END
 	assertEquals 'ver' "$(get_global_var tag)"
 }
 
