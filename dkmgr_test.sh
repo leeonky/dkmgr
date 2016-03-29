@@ -171,18 +171,31 @@ test_shall_update_tag_file_after_update() {
 }
 
 test_update_when_no_image_exist() {
-	rm_global_var tag
-	mock_function sudo 'if [ "$1" == tee ]; then
-	set_global_var tag $(cat)
-fi'
+	mock_function sudo 
 	mock_function image_tag_of
+	mock_function record_tag
 
 	docker_management update 'test/img' 'inc' 'ver'
 
 	mock_verify sudo CALL_LIST_START
 	mock_verify sudo CALLED_WITH_ARGS docker pull 'test/img:ver'
+	mock_verify sudo CALL_LIST_END
+	mock_verify record_tag HAS_CALLED_WITH 'test/img' 'inc' 'ver'
+}
+
+test_record_tag() {
+	rm_global_var tag
+	mock_function sudo 'if [ "$1" == tee ]; then
+	set_global_var tag $(cat)
+fi'
+
+	record_tag test/img inc ver
+
+	mock_verify sudo CALL_LIST_START
+	mock_verify sudo CALLED_WITH_ARGS mkdir -p /var/lib/dcs/img/inc/
 	mock_verify sudo CALLED_WITH_ARGS tee /var/lib/dcs/img/inc/tag
 	mock_verify sudo CALL_LIST_END
+
 	assertEquals 'ver' "$(get_global_var tag)"
 }
 
@@ -197,18 +210,18 @@ test_update_when_already_has_the_target_tag() {
 
 test_update_when_has_old_tag() {
 	mock_function image_tag_of 'echo ver0'
-
+	mock_function record_tag
 	mock_function sudo
 
 	update_image 'img' 'inc' 'ver'
 
 	mock_verify sudo CALL_LIST_START
 	mock_verify sudo CALLED_WITH_ARGS docker pull 'img:ver'
-	mock_verify sudo CALLED_WITH_ARGS tee /var/lib/dcs/img/inc/tag
 	mock_verify sudo CALLED_WITH_ARGS docker stop 'inc'
 	mock_verify sudo CALLED_WITH_ARGS docker rm 'inc'
 	mock_verify sudo CALLED_WITH_ARGS docker rmi 'img:ver0'
 	mock_verify sudo CALL_LIST_END
+	mock_verify record_tag HAS_CALLED_WITH 'img' 'inc' 'ver'
 }
 
 . $SHUNIT2_BIN
