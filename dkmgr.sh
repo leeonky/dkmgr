@@ -44,9 +44,20 @@ login_container() {
 }
 
 update_image() {
-	stop_container $2
-	docker_tool retain $1 $3 && \
-	( echo $3 | sudo tee "/var/lib/dcs/$(basename $1)/tag" )
+	local new_tag=$3
+	local inc_name=$2
+	local image_name=$1
+	local last_tag=$(image_tag_of $image_name $inc_name)
+	if [ "$last_tag" == "$new_tag" ]; then
+		return
+	fi
+	sudo docker pull "$image_name:$new_tag"
+	echo $3 | sudo tee "/var/lib/dcs/$(basename $image_name)/$inc_name/tag"
+	if [ "$last_tag" != "$new_tag" ]; then
+		sudo docker stop $inc_name
+		sudo docker rm $inc_name
+		sudo docker rmi "$image_name:$last_tag"
+	fi
 }
 
 docker_management() {

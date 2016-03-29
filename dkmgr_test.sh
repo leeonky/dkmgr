@@ -162,26 +162,51 @@ test_login_stopped_container() {
 	mock_verify ssh HAS_CALLED_WITH devuser@1.2.3.4
 }
 
-test_shall_stop_before_update() {
-	mock_function stop_container
-	mock_function docker_tool
-	mock_function sudo
+test_shall_update_tag_file_after_update() {
+	mock_function update_image
 
 	docker_management update img inc ver
-	
-	mock_verify stop_container HAS_CALLED_WITH 'inc'
-	mock_verify docker_tool HAS_CALLED_WITH retain 'img' 'ver' 
+
+	mock_verify update_image HAS_CALLED_WITH 'img' 'inc' 'ver'
 }
 
-test_shall_update_tag_file_after_update() {
-	mock_function stop_container
-	mock_function docker_tool
-	mock_function sudo 'set_global_var tag $(cat)'
+test_update_when_no_image_exist() {
+	rm_global_var tag
+	mock_function sudo 'if [ "$1" == tee ]; then
+	set_global_var tag $(cat)
+fi'
+	mock_function image_tag_of
 
-	docker_management update test/img inc ver
+	docker_management update 'test/img' 'inc' 'ver'
 
-	mock_verify sudo HAS_CALLED_WITH tee /var/lib/dcs/img/tag
-	assertEquals ver "$(get_global_var tag)"
+	mock_verify sudo HAS_CALLED_WITH docker pull 'test/img:ver'
+	mock_verify sudo HAS_CALLED_WITH tee /var/lib/dcs/img/inc/tag
+	assertEquals 'ver' "$(get_global_var tag)"
+}
+
+test_update_when_already_has_the_target_tag() {
+	mock_function image_tag_of 'echo ver'
+	mock_function sudo
+
+	update_image 'img' 'inc' 'ver'
+
+	mock_verify sudo NEVER_CALLED
+}
+
+test_update_when_has_old_tag() {
+	mock_function image_tag_of 'echo ver0'
+
+	mock_function sudo
+
+	update_image 'img' 'inc' 'ver'
+
+	mock_verify sudo CALL_LIST_START
+	mock_verify sudo CALLED_WITH_ARGS docker pull 'img:ver'
+	mock_verify sudo CALLED_WITH_ARGS tee /var/lib/dcs/img/inc/tag
+	mock_verify sudo CALLED_WITH_ARGS docker stop 'inc'
+	mock_verify sudo CALLED_WITH_ARGS docker rm 'inc'
+	mock_verify sudo CALLED_WITH_ARGS docker rmi 'img:ver0'
+	mock_verify sudo CALL_LIST_END
 }
 
 . $SHUNIT2_BIN
