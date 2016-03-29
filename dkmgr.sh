@@ -11,15 +11,11 @@ docker_run() {
 }
 
 is_container_running() {
-	[ "$(sudo docker ps --filter "name=$1" -q)" != "" ]
+	sudo docker ps --filter "name=$1" | grep "\s$1\$" -q
 }
 
 is_container_created() {
-	[ "$(sudo docker ps --filter "name=$1" -qa)" != "" ]
-}
-
-instance_run() {
-	sudo docker start $1
+	sudo docker ps --filter "name=$1" -a | grep "\s$1\$" -q
 }
 
 start_container() {
@@ -30,7 +26,7 @@ start_container() {
 			local tag=$(image_tag_of $image_name $inc_name)
 			docker_run $image_name:$tag $inc_name
 		else
-			instance_run $inc_name
+			sudo docker start $inc_name
 		fi
 	fi
 }

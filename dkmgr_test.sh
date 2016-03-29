@@ -56,21 +56,21 @@ test_start_container_again() {
 }
 
 test_is_container_running_when_stopped() {
-	mock_function sudo
+	mock_function sudo "echo the_inc"
 
 	is_container_running 'inc'
 	
 	assertFalse $?
-	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -q
+	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc'
 }
 
 test_is_container_running_when_running() {
-	mock_function sudo 'echo aaa'
+	mock_function sudo 'echo -e "\tinc"'
 
 	is_container_running 'inc'
 	
 	assertTrue $?
-	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -q
+	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc'
 }
 
 test_start_closed_container() {
@@ -78,40 +78,32 @@ test_start_closed_container() {
 	mock_function is_container_created
 	mock_function image_tag_of
 	mock_function docker_run
-	mock_function instance_run
+	mock_function sudo
 
 	start_container 'img' 'inc'
 
 	mock_verify is_container_created HAS_CALLED_WITH 'inc'
-	mock_verify instance_run HAS_CALLED_WITH 'inc'
+	mock_verify sudo HAS_CALLED_WITH docker start 'inc'
 	mock_verify image_tag_of NEVER_CALLED
 	mock_verify docker_run NEVER_CALLED
 }
 
 test_is_container_created_when_created() {
-	mock_function sudo 'echo id'
+	mock_function sudo 'echo -e " inc"'
 
 	is_container_created 'inc'
 
 	assertTrue $?
-	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -qa
+	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -a
 }
 
 test_is_container_created_when_not_created() {
-	mock_function sudo
+	mock_function sudo 'echo the_inc'
 
 	is_container_created 'inc'
 
 	assertFalse $?
-	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -qa
-}
-
-test_instance_run() {
-	mock_function sudo
-
-	instance_run inc
-
-	mock_verify sudo HAS_CALLED_WITH docker start 'inc'
+	mock_verify sudo HAS_CALLED_WITH docker ps --filter 'name=inc' -a
 }
 
 test_stop_runner() {
