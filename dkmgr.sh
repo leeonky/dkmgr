@@ -65,6 +65,11 @@ update_image() {
 	fi
 }
 
+delete_container() {
+	sudo docker stop $1
+	sudo docker rm $1
+}
+
 docker_management() {
 	local new_tag=$4
 	local inc_name=$3
@@ -86,6 +91,8 @@ docker_management() {
 	update)
 		update_image $image_name $inc_name $new_tag
 	;;
+	delete)
+		delete_container $inc_name
 	esac
 }
 
