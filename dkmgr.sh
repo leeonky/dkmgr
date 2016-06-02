@@ -12,7 +12,23 @@ record_tag() {
 }
 
 docker_run() {
-	sudo docker run --name $2 -d --privileged=true -v ~/share:/home/devuser/share/:rw -v ~/.ssh:/home/devuser/.ssh $1
+	local TCP_EXPORT_PORTS=(22 3000 5000)
+	local UDP_EXPORT_PORTS=()
+
+	local tcp_mapping
+	local udp_mapping
+
+	local p
+	for p in ${TCP_EXPORT_PORTS[@]}
+	do
+		tcp_mapping="-p $(($p+40000)):$p/tcp $tcp_mapping"
+	done
+	for p in ${UDP_EXPORT_PORTS[@]}
+	do
+		udp_mapping="-p $(($p+40000)):$p/udp $udp_mapping"
+	done
+
+	sudo docker run --name $2 -d --privileged=true -v ~/:/home/devuser/share/:rw -v ~/.ssh:/home/devuser/.ssh $tcp_mapping $udp_mapping $1
 }
 
 is_container_running() {
@@ -45,7 +61,8 @@ login_container() {
 		start_container $1 $2
 	fi
 	local ip=$(sudo docker inspect $2 | grep '"IPAddress"' | awk -F\" '{print $4}')
-	ssh devuser@$ip
+	ip="127.0.0.1"
+	ssh devuser@$ip -p 40022
 }
 
 update_image() {
